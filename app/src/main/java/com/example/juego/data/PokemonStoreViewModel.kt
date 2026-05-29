@@ -33,12 +33,12 @@ class PokemonStoreViewModel(application: Application) : AndroidViewModel(applica
     val buyResult: LiveData<PurchaseResult> = _buyResult
 
     suspend fun buyPokemon(pokemon: PokemonEntity): Boolean {
-        val result = repository.buyPokemon(currentUserId, pokemon, GameStateManager.score)
+        val result = repository.buyPokemon(currentUserId, pokemon, GameStateManager.sessionScore)
         _buyResult.postValue(result)
         return result is PurchaseResult.Success
     }
 
     fun deductScore(amount: Int) {
-        GameStateManager.score -= amount
+        GameStateManager.sessionScore -= amount
     }
 }

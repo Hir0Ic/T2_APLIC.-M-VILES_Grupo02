@@ -44,8 +44,14 @@ class PokemonRepository(context: Context) {
         return dao.getUserById(userId)
     }
 
-    suspend fun updateUserScore(userId: Int, score: Int) {
-        dao.updateUserScore(userId, score)
+    suspend fun addToGlobalScore(userId: Int, amount: Int) {
+        if (amount != 0) {
+            dao.addToGlobalScore(userId, amount)
+        }
+    }
+
+    suspend fun getPurchasedPokemons(userId: Int): List<PokemonEntity> {
+        return dao.getPurchasedPokemons(userId)
     }
 
     companion object {

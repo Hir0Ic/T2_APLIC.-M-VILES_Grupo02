@@ -51,6 +51,9 @@ interface PokemonDao {
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     suspend fun getUserById(userId: Int): UserEntity?
 
-    @Query("UPDATE users SET score = :newScore WHERE id = :userId")
-    suspend fun updateUserScore(userId: Int, newScore: Int)
+    @Query("UPDATE users SET globalScore = globalScore + :amount WHERE id = :userId")
+    suspend fun addToGlobalScore(userId: Int, amount: Int)
+
+    @Query("SELECT p.* FROM pokemon_catalog p INNER JOIN purchases pu ON p.id = pu.pokemonId WHERE pu.userId = :userId ORDER BY p.cost DESC")
+    suspend fun getPurchasedPokemons(userId: Int): List<PokemonEntity>
 }

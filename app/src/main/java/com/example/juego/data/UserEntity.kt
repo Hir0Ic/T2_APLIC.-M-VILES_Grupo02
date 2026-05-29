@@ -1,6 +1,5 @@
 package com.example.juego.data
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,5 +9,5 @@ data class UserEntity(
     val username: String,
     val email: String,
     val password: String,
-    val score: Int = 0
+    val globalScore: Int = 0
 )

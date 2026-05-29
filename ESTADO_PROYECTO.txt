@@ -17,15 +17,12 @@ FUNCIONES IMPLEMENTADAS
 - Archivos: LoginActivity.kt, RegisterActivity.kt, SessionManager.kt
 
 ============================================================
-[PENDIENTE] Juego principal (5 pts)
-- NO IMPLEMENTADO
-- Requiere:
-  * Pikachu (+1 punto/click) - YA EXISTE parcialmente (solo suma +1)
-  * Meowth (-2 puntos/click) - NO EXISTE
-  * Ambos simultáneos en el grid 3x3 - NO EXISTE
-  * Puntaje en tiempo real - PARCIAL (solo suma, no resta)
-- Actualmente: 9 Pikachus en el grid, todos suman +1
-- Falta: mezclar Pikachus y Meowths aleatoriamente en el grid
+[COMPLETO] Juego principal (5 pts)
+- Implementado por: Alonso + integrado por Gerardo
+- Pikachu (+1 punto/click) y Meowth (-2 puntos/click) simultáneos
+- Aparecen en posiciones aleatorias distintas del grid 3x3
+- Detección de click por índice de posición
+- Puntaje en tiempo real guardado en Room
 
 ============================================================
 [COMPLETO] Tienda Pokémon (9 pts)
@@ -48,14 +45,12 @@ FUNCIONES IMPLEMENTADAS
 - Archivos: MainActivity.kt (línea 129), activity_main.xml
 
 ============================================================
-[PENDIENTE] Victoria/Derrota (2 pts)
-- NO IMPLEMENTADO
-- Requiere:
-  * Al terminar el juego: puntaje <= 0 -> "PERDISTE"
-  * puntaje >= 30 -> "¡GANASTE!"
-  * Ambos con opciones de reiniciar o salir
-- Actualmente: solo diálogo "Juego terminado / Reiniciar?" genérico
-- Archivo a modificar: MainActivity.kt (onFinish del CountDownTimer)
+[COMPLETO] Victoria/Derrota (2 pts)
+- Implementado por: rama victoria-derrota + integrado por Gerardo
+- score <= 0 -> "PERDISTE"
+- score >= 30 -> "¡GANASTE!"
+- Ambos con botones "Reiniciar juego" y "Salir"
+- Adaptado a Room (guardado de puntaje via PokemonRepository)
 
 ============================================================
 RESUMEN DE RAMAS

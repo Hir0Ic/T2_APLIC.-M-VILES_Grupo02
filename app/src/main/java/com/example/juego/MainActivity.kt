@@ -22,15 +22,19 @@ import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
+enum class GameState { IDLE, PLAYING, ENDED }
+
 class MainActivity : AppCompatActivity() {
 
-    var score = 0
+    var sessionScore = 0
+    var globalScore = 0
     var imageArray = ArrayList<ImageView>()
     var handler = Handler()
     var runnable = Runnable {  }
 
     private var indicePikachu = -1
     private var indiceMeowth = -1
+    private var gameState = GameState.IDLE
 
     private lateinit var timeText: TextView
     private lateinit var scoreText: TextView
@@ -39,6 +43,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
     private var activeUser: UserEntity? = null
+    private var activePokemonImage: String = "pikachu"
+    private var activePokemonName: String = "Pikachu"
+
+    private var countDownTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,8 +70,14 @@ class MainActivity : AppCompatActivity() {
                 return@launch
             }
             activeUser = user
-            score = user.score
-            GameStateManager.score = score
+            globalScore = user.globalScore
+
+            val prefs = getSharedPreferences("sesion", MODE_PRIVATE)
+            activePokemonImage = prefs.getString("active_pokemon_image", "pikachu") ?: "pikachu"
+            activePokemonName = prefs.getString("active_pokemon_name", "Pikachu") ?: "Pikachu"
+
+            GameStateManager.sessionScore = 0
+            sessionScore = 0
 
             runOnUiThread {
                 timeText = findViewById<TextView>(R.id.timeText)
@@ -72,14 +86,16 @@ class MainActivity : AppCompatActivity() {
                 btnLogout = findViewById<Button>(R.id.btnLogout)
 
                 tvWelcomeUser.text = "¡Hola, ${user.username}!"
-                scoreText.text = "Puntaje: $score"
+                updateScoreDisplay()
 
                 setupGame()
+                startGame()
 
                 btnLogout.setOnClickListener {
+                    stopGame()
                     lifecycleScope.launch {
                         PokemonRepository.getInstance(this@MainActivity)
-                            .updateUserScore(sessionManager.getUserId(), score)
+                            .addToGlobalScore(sessionManager.getUserId(), sessionScore)
                     }
                     sessionManager.logout()
                     launchLoginActivity()
@@ -128,48 +144,47 @@ class MainActivity : AppCompatActivity() {
 
         for (i in 0 until imageArray.size) {
             imageArray[i].setOnClickListener {
+                if (gameState != GameState.PLAYING) return@setOnClickListener
                 if (i == indicePikachu) {
-                    score += 1
+                    sessionScore += 1
                 } else if (i == indiceMeowth) {
-                    score -= 2
+                    sessionScore -= 2
                 }
-                scoreText.text = "Puntaje: $score"
-                GameStateManager.score = score
-                saveScore()
+                GameStateManager.sessionScore = sessionScore
+                updateScoreDisplay()
             }
+        }
+    }
+
+    private fun startGame() {
+        gameState = GameState.PLAYING
+        sessionScore = 0
+        GameStateManager.sessionScore = 0
+        updateScoreDisplay()
+
+        val activeResId = getPokemonDrawable(activePokemonImage)
+        for (image in imageArray) {
+            image.setImageResource(activeResId)
         }
 
         hideImages()
 
-        object : CountDownTimer(75000, 1000) {
+        countDownTimer = object : CountDownTimer(75000, 1000) {
             override fun onFinish() {
+                gameState = GameState.ENDED
                 timeText.text = "Tiempo: 00:00"
                 handler.removeCallbacks(runnable)
                 for (image in imageArray) {
                     image.visibility = View.INVISIBLE
                 }
 
-                saveScore()
-
-                val (titulo, mensaje) = when {
-                    score >= 30 -> "¡GANASTE!" to "Felicidades, lograste $score puntos."
-                    score <= 0 -> "PERDISTE" to "Tu puntaje es $score. Inténtalo de nuevo."
-                    else -> "Juego Terminado" to "Obtuviste $score puntos. Necesitas 30 para ganar."
+                lifecycleScope.launch {
+                    PokemonRepository.getInstance(this@MainActivity)
+                        .addToGlobalScore(sessionManager.getUserId(), sessionScore)
+                    globalScore += sessionScore
                 }
 
-                val alert = AlertDialog.Builder(this@MainActivity)
-                alert.setTitle(titulo)
-                alert.setMessage(mensaje)
-                alert.setCancelable(false)
-                alert.setPositiveButton("Reiniciar juego") { _, _ ->
-                    val intent = intent
-                    finish()
-                    startActivity(intent)
-                }
-                alert.setNegativeButton("Salir") { _, _ ->
-                    finish()
-                }
-                alert.show()
+                showEndGameDialog()
             }
 
             override fun onTick(millisUntilFinished: Long) {
@@ -178,20 +193,64 @@ class MainActivity : AppCompatActivity() {
                 val seconds = totalSeconds % 60
                 timeText.text = String.format("Tiempo: %02d:%02d", minutes, seconds)
             }
-
         }.start()
+    }
+
+    private fun stopGame() {
+        gameState = GameState.IDLE
+        countDownTimer?.cancel()
+        handler.removeCallbacks(runnable)
+        for (image in imageArray) {
+            image.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun showEndGameDialog() {
+        val (titulo, mensaje) = when {
+            sessionScore >= 30 -> "¡GANASTE!" to "Felicidades, lograste $sessionScore puntos.\nPuntaje global: $globalScore"
+            sessionScore <= 0 -> "PERDISTE" to "Tu puntaje es $sessionScore. Inténtalo de nuevo.\nPuntaje global: $globalScore"
+            else -> "Juego Terminado" to "Obtuviste $sessionScore puntos. Necesitas 30 para ganar.\nPuntaje global: $globalScore"
+        }
+
+        val alert = AlertDialog.Builder(this@MainActivity)
+        alert.setTitle(titulo)
+        alert.setMessage(mensaje)
+        alert.setCancelable(false)
+        alert.setPositiveButton("Reiniciar juego") { _, _ ->
+            lifecycleScope.launch {
+                val user = PokemonRepository.getInstance(this@MainActivity)
+                    .getUserById(sessionManager.getUserId())
+                globalScore = user?.globalScore ?: globalScore
+                runOnUiThread {
+                    updateScoreDisplay()
+                    startGame()
+                }
+            }
+        }
+        alert.setNeutralButton("Ir a la tienda") { _, _ ->
+            val intent = Intent(this@MainActivity, TiendaPokemonActivity::class.java)
+            startActivity(intent)
+        }
+        alert.setNegativeButton("Salir") { _, _ ->
+            stopGame()
+            finish()
+        }
+        alert.show()
     }
 
     fun hideImages() {
         runnable = object : Runnable {
             override fun run() {
+                if (gameState != GameState.PLAYING) return
+
                 for (image in imageArray) {
                     image.visibility = View.INVISIBLE
                 }
 
                 val random = Random()
                 indicePikachu = random.nextInt(9)
-                imageArray[indicePikachu].setImageResource(R.drawable.pikachu)
+                val activeResId = getPokemonDrawable(activePokemonImage)
+                imageArray[indicePikachu].setImageResource(activeResId)
                 imageArray[indicePikachu].visibility = View.VISIBLE
 
                 do {
@@ -207,11 +266,8 @@ class MainActivity : AppCompatActivity() {
         handler.post(runnable)
     }
 
-    private fun saveScore() {
-        lifecycleScope.launch {
-            PokemonRepository.getInstance(this@MainActivity)
-                .updateUserScore(sessionManager.getUserId(), score)
-        }
+    private fun updateScoreDisplay() {
+        scoreText.text = "Sesión: $sessionScore  |  Global: $globalScore"
     }
 
     private fun loadMostExpensivePokemon() {
@@ -229,13 +285,56 @@ class MainActivity : AppCompatActivity() {
                         if (pokemon != null) {
                             val resId = getPokemonDrawable(pokemon.imageResName)
                             ivPurchased.setImageResource(resId)
-                            tvPurchased.text = "Tu Pokémon: ${pokemon.name}"
+                            if (activePokemonName == "Pikachu" && activePokemonImage == "pikachu") {
+                                activePokemonImage = pokemon.imageResName
+                                activePokemonName = pokemon.name
+                                getSharedPreferences("sesion", MODE_PRIVATE)
+                                    .edit()
+                                    .putString("active_pokemon_image", activePokemonImage)
+                                    .putString("active_pokemon_name", activePokemonName)
+                                    .apply()
+                            }
+                            tvPurchased.text = "Tu Pokémon: $activePokemonName"
                             purchasedSection.visibility = View.VISIBLE
                         } else {
+                            activePokemonImage = "pikachu"
+                            activePokemonName = "Pikachu"
                             purchasedSection.visibility = View.GONE
                         }
                     }
             }
+        }
+    }
+
+    fun cambiarPokemon(unused: View) {
+        lifecycleScope.launch {
+            val userId = sessionManager.getUserId()
+            val purchased = PokemonRepository.getInstance(this@MainActivity)
+                .getPurchasedPokemons(userId)
+
+            if (purchased.isEmpty()) return@launch
+
+            val nombres = purchased.map { it.name }.toTypedArray()
+
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("Elegir Pokémon")
+                .setItems(nombres) { _, which ->
+                    val selected = purchased[which]
+                    activePokemonImage = selected.imageResName
+                    activePokemonName = selected.name
+                    getSharedPreferences("sesion", MODE_PRIVATE)
+                        .edit()
+                        .putString("active_pokemon_image", activePokemonImage)
+                        .putString("active_pokemon_name", activePokemonName)
+                        .apply()
+
+                    val tvPurchased = findViewById<TextView>(R.id.tvPurchasedPokemon)
+                    tvPurchased.text = "Tu Pokémon: $activePokemonName"
+
+                    val ivPurchased = findViewById<ImageView>(R.id.ivPurchasedPokemon)
+                    ivPurchased.setImageResource(getPokemonDrawable(activePokemonImage))
+                }
+                .show()
         }
     }
 
@@ -258,14 +357,30 @@ class MainActivity : AppCompatActivity() {
 
     private fun launchLoginActivity() {
         handler.removeCallbacks(runnable)
+        countDownTimer?.cancel()
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::sessionManager.isInitialized && sessionManager.isLoggedIn()) {
+            lifecycleScope.launch {
+                val user = PokemonRepository.getInstance(this@MainActivity)
+                    .getUserById(sessionManager.getUserId())
+                user?.let {
+                    globalScore = it.globalScore
+                    runOnUiThread { updateScoreDisplay() }
+                }
+            }
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(runnable)
+        countDownTimer?.cancel()
     }
 }

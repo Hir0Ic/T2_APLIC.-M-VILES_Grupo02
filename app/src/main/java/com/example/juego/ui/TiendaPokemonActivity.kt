@@ -33,7 +33,7 @@ class TiendaPokemonActivity : AppCompatActivity() {
                 val success = viewModel.buyPokemon(pokemon)
                 if (success) {
                     viewModel.deductScore(pokemon.cost)
-                    tvStoreScore.text = "Puntaje disponible: ${GameStateManager.score}"
+                    tvStoreScore.text = "Puntaje disponible: ${GameStateManager.sessionScore}"
                     Toast.makeText(
                         this@TiendaPokemonActivity,
                         "${pokemon.name} comprado!",
@@ -44,16 +44,16 @@ class TiendaPokemonActivity : AppCompatActivity() {
         }
         rvStore.adapter = adapter
 
-        tvStoreScore.text = "Puntaje disponible: ${GameStateManager.score}"
+        tvStoreScore.text = "Puntaje disponible: ${GameStateManager.sessionScore}"
 
         viewModel.allPokemon.observe(this) { pokemonList ->
             val purchasedIds = viewModel.purchasedPokemonIds.value?.toSet() ?: emptySet()
-            adapter.updateData(pokemonList, purchasedIds, GameStateManager.score)
+            adapter.updateData(pokemonList, purchasedIds, GameStateManager.sessionScore)
         }
 
         viewModel.purchasedPokemonIds.observe(this) { purchasedIds ->
             viewModel.allPokemon.value?.let { pokemonList ->
-                adapter.updateData(pokemonList, purchasedIds.toSet(), GameStateManager.score)
+                adapter.updateData(pokemonList, purchasedIds.toSet(), GameStateManager.sessionScore)
             }
         }
 
