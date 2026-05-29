@@ -22,7 +22,7 @@
         android:id="@+id/tvStoreScore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Puntaje disponible: 0"
+        android:text="Puntaje global: 0"
         android:textSize="18sp"
         android:layout_gravity="center"
         android:layout_marginBottom="16dp" />

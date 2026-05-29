@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.juego.R
-import com.example.juego.data.GameStateManager
 import com.example.juego.data.PokemonStoreViewModel
 import com.example.juego.data.PurchaseResult
 import kotlinx.coroutines.launch
@@ -33,7 +32,7 @@ class TiendaPokemonActivity : AppCompatActivity() {
                 val success = viewModel.buyPokemon(pokemon)
                 if (success) {
                     viewModel.deductScore(pokemon.cost)
-                    tvStoreScore.text = "Puntaje disponible: ${GameStateManager.sessionScore}"
+                    tvStoreScore.text = "Puntaje global: ${viewModel.globalScore}"
                     Toast.makeText(
                         this@TiendaPokemonActivity,
                         "${pokemon.name} comprado!",
@@ -44,16 +43,17 @@ class TiendaPokemonActivity : AppCompatActivity() {
         }
         rvStore.adapter = adapter
 
-        tvStoreScore.text = "Puntaje disponible: ${GameStateManager.sessionScore}"
+        viewModel.refreshGlobalScore()
+        tvStoreScore.text = "Puntaje global: ${viewModel.globalScore}"
 
         viewModel.allPokemon.observe(this) { pokemonList ->
             val purchasedIds = viewModel.purchasedPokemonIds.value?.toSet() ?: emptySet()
-            adapter.updateData(pokemonList, purchasedIds, GameStateManager.sessionScore)
+            adapter.updateData(pokemonList, purchasedIds, viewModel.globalScore)
         }
 
         viewModel.purchasedPokemonIds.observe(this) { purchasedIds ->
             viewModel.allPokemon.value?.let { pokemonList ->
-                adapter.updateData(pokemonList, purchasedIds.toSet(), GameStateManager.sessionScore)
+                adapter.updateData(pokemonList, purchasedIds.toSet(), viewModel.globalScore)
             }
         }
 

@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class PokemonStoreViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -14,6 +15,9 @@ class PokemonStoreViewModel(application: Application) : AndroidViewModel(applica
 
     val currentUserId: Int
         get() = sessionManager.getUserId()
+
+    var globalScore: Int = 0
+        private set
 
     val allPokemon: LiveData<List<PokemonEntity>> by lazy {
         repository.getAllPokemon().asLiveData(viewModelScope.coroutineContext)
@@ -32,13 +36,30 @@ class PokemonStoreViewModel(application: Application) : AndroidViewModel(applica
     private val _buyResult = MutableLiveData<PurchaseResult>()
     val buyResult: LiveData<PurchaseResult> = _buyResult
 
+    init {
+        viewModelScope.launch {
+            val user = repository.getUserById(currentUserId)
+            globalScore = user?.globalScore ?: 0
+        }
+    }
+
+    fun refreshGlobalScore() {
+        viewModelScope.launch {
+            val user = repository.getUserById(currentUserId)
+            globalScore = user?.globalScore ?: globalScore
+        }
+    }
+
     suspend fun buyPokemon(pokemon: PokemonEntity): Boolean {
-        val result = repository.buyPokemon(currentUserId, pokemon, GameStateManager.sessionScore)
+        val result = repository.buyPokemon(currentUserId, pokemon, globalScore)
         _buyResult.postValue(result)
         return result is PurchaseResult.Success
     }
 
     fun deductScore(amount: Int) {
-        GameStateManager.sessionScore -= amount
+        globalScore -= amount
+        viewModelScope.launch {
+            repository.addToGlobalScore(currentUserId, -amount)
+        }
     }
 }

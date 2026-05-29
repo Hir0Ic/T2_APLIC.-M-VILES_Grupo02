@@ -184,6 +184,9 @@ class MainActivity : AppCompatActivity() {
                     PokemonRepository.getInstance(this@MainActivity)
                         .addToGlobalScore(sessionManager.getUserId(), sessionScore)
                     globalScore += sessionScore
+                    GameStateManager.sessionScore = 0
+                    sessionScore = 0
+                    runOnUiThread { updateScoreDisplay() }
                 }
 
                 if (!endDialogShown) {
