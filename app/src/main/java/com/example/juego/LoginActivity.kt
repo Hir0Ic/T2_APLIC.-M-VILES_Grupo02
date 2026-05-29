@@ -5,9 +5,12 @@ import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.juego.data.PokemonRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
@@ -18,16 +21,13 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: MaterialButton
     private lateinit var tvRegisterRedirect: TextView
 
-    private lateinit var dbHelper: DatabaseHelper
     private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         sessionManager = SessionManager(this)
-        dbHelper = DatabaseHelper(this)
 
-        // Si ya hay una sesión activa, redireccionar al juego
         if (sessionManager.isLoggedIn()) {
             launchMainActivity()
             return
@@ -35,7 +35,6 @@ class LoginActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_login)
 
-        // Inicializar vistas
         etCredential = findViewById(R.id.etCredential)
         etPassword = findViewById(R.id.etPassword)
         tilCredential = findViewById(R.id.tilCredential)
@@ -43,24 +42,25 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btnLogin)
         tvRegisterRedirect = findViewById(R.id.tvRegisterRedirect)
 
-        // Acción al hacer clic en Ingresar
         btnLogin.setOnClickListener {
             if (validarCampos()) {
                 val credential = etCredential.text.toString().trim()
                 val password = etPassword.text.toString().trim()
 
-                val userId = dbHelper.loginUsuario(credential, password)
-                if (userId != -1) {
-                    sessionManager.saveSession(userId)
-                    Toast.makeText(this, "¡Bienvenido, Entrenador!", Toast.LENGTH_SHORT).show()
-                    launchMainActivity()
-                } else {
-                    Toast.makeText(this, "Usuario/Correo o Contraseña incorrectos", Toast.LENGTH_LONG).show()
+                lifecycleScope.launch {
+                    val user = PokemonRepository.getInstance(this@LoginActivity)
+                        .loginUser(credential, password)
+                    if (user != null) {
+                        sessionManager.saveSession(user.id)
+                        Toast.makeText(this@LoginActivity, "¡Bienvenido, Entrenador!", Toast.LENGTH_SHORT).show()
+                        launchMainActivity()
+                    } else {
+                        Toast.makeText(this@LoginActivity, "Usuario/Correo o Contraseña incorrectos", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }
 
-        // Acción para ir al registro
         tvRegisterRedirect.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)

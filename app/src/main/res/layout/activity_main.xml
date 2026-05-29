@@ -8,7 +8,6 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Fila superior: Bienvenida y Logout -->
     <LinearLayout
         android:id="@+id/layoutTopBar"
         android:layout_width="match_parent"
@@ -45,7 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:gravity="center"
-        android:text="Tiempo: 15 seg"
+        android:text="Tiempo: 01:15"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -70,6 +69,8 @@
         android:layout_marginTop="24dp"
         android:rowCount="3"
         android:columnCount="3"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/purchasedSection"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/scoreText">
@@ -81,7 +82,6 @@
             android:layout_row="0"
             android:layout_column="0"
             android:contentDescription="imageView"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -91,7 +91,6 @@
             android:layout_row="0"
             android:layout_column="1"
             android:contentDescription="imageView2"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -101,7 +100,6 @@
             android:layout_row="0"
             android:layout_column="2"
             android:contentDescription="imageView3"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -111,7 +109,6 @@
             android:layout_row="1"
             android:layout_column="0"
             android:contentDescription="imageView4"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -121,7 +118,6 @@
             android:layout_row="1"
             android:layout_column="1"
             android:contentDescription="imageView5"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -131,7 +127,6 @@
             android:layout_row="1"
             android:layout_column="2"
             android:contentDescription="imageView6"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -141,7 +136,6 @@
             android:layout_row="2"
             android:layout_column="0"
             android:contentDescription="imageView7"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -151,7 +145,6 @@
             android:layout_row="2"
             android:layout_column="1"
             android:contentDescription="imageView8"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
 
         <ImageView
@@ -161,8 +154,49 @@
             android:layout_row="2"
             android:layout_column="2"
             android:contentDescription="imageView9"
-            android:onClick="increaseScore"
             app:srcCompat="@drawable/pikachu" />
     </GridLayout>
+
+    <LinearLayout
+        android:id="@+id/purchasedSection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:onClick="cambiarPokemon"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toTopOf="@id/btnTienda"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/gridLayout">
+
+        <ImageView
+            android:id="@+id/ivPurchasedPokemon"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:contentDescription="Pokemon comprado" />
+
+        <TextView
+            android:id="@+id/tvPurchasedPokemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnTienda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Tienda Pokémon"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

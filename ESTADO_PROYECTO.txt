@@ -1,0 +1,99 @@
+=== ESTADO DEL PROYECTO - T2 APLICACIONES MOVILES ===
+Fecha: 29/05/2026
+Rama principal: feature/tienda-pokemon (Gerardo)
+
+============================================================
+FUNCIONES IMPLEMENTADAS
+============================================================
+
+[COMPLETO] Autenticación (2 pts)
+- Implementado por: Kevin (origin/main)
+- Login con usuario/correo + contraseña
+- Registro con validación de email, usuario (>=3 chars), contraseña (>=6 chars)
+- Evita duplicados de usuario/correo
+- Sesión activa via SessionManager (SharedPreferences)
+- LoginActivity como pantalla inicial (launcher)
+- MIGRADO de SQLite directo (DatabaseHelper) a Room unificado
+- Archivos: LoginActivity.kt, RegisterActivity.kt, SessionManager.kt
+
+============================================================
+[COMPLETO] Juego principal (5 pts)
+- Implementado por: Alonso + integrado por Gerardo
+- Pikachu (+1 punto/click) y Meowth (-2 puntos/click) simultáneos
+- Aparecen en posiciones aleatorias distintas del grid 3x3
+- Detección de click por índice de posición
+- Puntaje en tiempo real guardado en Room
+
+============================================================
+[COMPLETO] Tienda Pokémon (9 pts)
+- Implementado por: Gerardo + imágenes de Luis (luchin1234)
+- 9 Pokémon con nombre, imagen PNG real y costo:
+  Magikarp(5), Diglett(8), Nidoran(10), Charmander(12),
+  Jigglypuff(14), Squirtle(15), Vulpix(20), Vaporeon(25), Blastoise(30)
+- Compra verificando puntaje suficiente y sin duplicados
+- Persistencia via Room (AppDatabase, PokemonDao, PokemonRepository)
+- Pokémon más caro comprado se muestra en juego principal (purchasedSection)
+- RecyclerView 3 columnas + ViewModel + LiveData
+- Archivos: data/*, ui/TiendaPokemonActivity.kt, ui/PokemonStoreAdapter.kt
+
+============================================================
+[COMPLETO] Temporizador (2 pts)
+- Implementado por: Gerardo
+- Cuenta regresiva 01:15 (MM:SS) con CountDownTimer (75000ms)
+- Inicia automático al abrir el juego
+- Detiene el juego al finalizar (muestra diálogo reiniciar/salir)
+- Archivos: MainActivity.kt (línea 129), activity_main.xml
+
+============================================================
+[COMPLETO] Victoria/Derrota (2 pts)
+- Implementado por: rama victoria-derrota + integrado por Gerardo
+- score <= 0 -> "PERDISTE"
+- score >= 30 -> "¡GANASTE!"
+- Ambos con botones "Reiniciar juego" y "Salir"
+- Adaptado a Room (guardado de puntaje via PokemonRepository)
+
+============================================================
+RESUMEN DE RAMAS
+============================================================
+
+RAMA                       | QUIÉN     | ESTADO
+origin/main                | Kevin     | Auth completo (SQLite directo -> migrado a Room)
+origin/feature/tienda-pokemon | Gerardo  | Tienda + Temporizador + Auth unificado
+origin/temporizador         | ???       | Solo prototipo Python, no Android
+origin/victoria-derrota     | ???       | Sin cambios (solo commit inicial)
+
+============================================================
+COMPARATIVA: Nuestra tienda vs Tienda de Luis
+============================================================
+
+ASPECTO              | LUIS (e478137)        | NUESTRO (actual)
+---------------------|-----------------------|---------------------------
+Base de datos        | SQLite directo (DBHelper.kt) | Room (AppDatabase)
+Arquitectura UI      | ScrollView + LinearLayout programático | RecyclerView + Adapter + GridLayout
+ViewModel/LiveData   | NO                    | SI (PokemonStoreViewModel)
+Manejo de sesión     | SharedPreferences directo | SessionManager (Kevin)
+userId               | Hardcodeado (jugadorId=1) | Del login real (SessionManager)
+Corrutinas/Async     | NO (SQLite en main thread) | SI (lifecycleScope + suspend)
+Imágenes             | 9 PNGs reales         | Heredamos sus 9 PNGs
+Separación de capas  | Todo mezclado         | data/ui/viewmodel separados
+Check duplicados     | Por nombre (String)   | Por ID (Int, más robusto)
+Mostrar en juego     | Reemplaza TODO el grid| Sección separada (purchasedSection)
+
+CONCLUSIÓN: Nuestra versión es superior en arquitectura y buenas prácticas.
+Los PNGs de Luis se integraron exitosamente.
+
+============================================================
+PENDIENTE PARA COMPLETAR EL PROYECTO
+============================================================
+
+1. JUEGO PRINCIPAL (5 pts) - Compañero asignado
+   - Agregar Meowth (-2 ptos) al grid 3x3
+   - Mostrar Pikachus y Meowths simultáneamente
+   - Pikachu (+1), Meowth (-2)
+   
+2. VICTORIA/DERRROTA (2 pts) - Compañero asignado
+   - En onFinish del timer: score <= 0 -> "PERDISTE"
+   - score >= 30 -> "¡GANASTE!"
+   - Ambos con reiniciar/salir
+
+============================================================
