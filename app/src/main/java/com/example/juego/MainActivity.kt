@@ -1,16 +1,23 @@
 package com.example.juego
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.view.View
-import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.juego.data.GameStateManager
+import com.example.juego.data.PokemonRepository
+import com.example.juego.ui.TiendaPokemonActivity
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -91,6 +98,14 @@ class MainActivity : AppCompatActivity() {
             }
 
         }.start()
+
+        val btnTienda = findViewById<android.widget.Button>(R.id.btnTienda)
+        btnTienda.setOnClickListener {
+            val intent = Intent(this, TiendaPokemonActivity::class.java)
+            startActivity(intent)
+        }
+
+        loadMostExpensivePokemon()
     }
 
     fun hideImages() {
@@ -111,5 +126,31 @@ class MainActivity : AppCompatActivity() {
     fun increaseScore(view: View){
         score = score + 1
         scoreText.text = "Puntaje: $score"
+        GameStateManager.score = score
+    }
+
+    private fun loadMostExpensivePokemon() {
+        val ivPurchased = findViewById<ImageView>(R.id.ivPurchasedPokemon)
+        val tvPurchased = findViewById<TextView>(R.id.tvPurchasedPokemon)
+        val purchasedSection = findViewById<LinearLayout>(R.id.purchasedSection)
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PokemonRepository.getInstance(this@MainActivity)
+                    .getMostExpensivePurchased(GameStateManager.currentUserId)
+                    .collect { pokemon ->
+                        if (pokemon != null) {
+                            val resId = resources.getIdentifier(
+                                pokemon.imageResName, "drawable", packageName
+                            )
+                            if (resId != 0) ivPurchased.setImageResource(resId)
+                            tvPurchased.text = "Tu Pokémon: ${pokemon.name}"
+                            purchasedSection.visibility = View.VISIBLE
+                        } else {
+                            purchasedSection.visibility = View.GONE
+                        }
+                    }
+            }
+        }
     }
 }
