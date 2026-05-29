@@ -1,0 +1,347 @@
+============================================================
+REPARTO DE EXPOSICIÓN - T2 APLICACIONES MÓVILES
+============================================================
+
+============================================================
+GRUPO 1: TIENDA POKÉMON (3 personas)
+============================================================
+
+--- GERARDO (YamiDarknezz) — Demo en vivo + corazón de la tienda ---
+
+EXPLICA EN VIVO: abre la app, registra, juega, compra, muestra el Pokémon en el juego.
+
+Archivo: app/src/main/java/com/example/juego/data/AppDatabase.kt (líneas 17-37)
+- Clase AppDatabase: abstract class que extiende RoomDatabase
+- getInstance(): singleton con patrón Double-Checked Locking
+- fallbackToDestructiveMigration(): recrea DB si cambia esquema
+- SeedCallback.onCreate(): inserta los 9 Pokémon con raw SQL
+
+Archivo: app/src/main/java/com/example/juego/data/PokemonRepository.kt
+- getInstance(): singleton repository
+- buyPokemon(): lógica central de compra
+- addToGlobalScore(): suma puntaje de sesión al global
+- registerUser(), loginUser(), getUserById()
+
+Archivo: app/src/main/java/com/example/juego/data/GameStateManager.kt
+- Objeto singleton con sessionScore
+- Puente entre MainActivity y TiendaPokemonActivity
+
+Archivo: app/src/main/java/com/example/juego/data/PokemonStoreViewModel.kt (líneas 10-65)
+- AndroidViewModel: recibe Application
+- globalScore: Int cargado desde Room
+- refreshGlobalScore(): suspend fun para cargar score
+- buyPokemon(): verifica puntaje global antes de comprar
+- deductScore(): descuenta y persiste en Room
+- LiveData: allPokemon, purchasedPokemonIds, buyResult
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 293-340)
+- loadMostExpensivePokemon(): Flow que observa el Pokémon más caro
+- cambiarPokemon(): diálogo con lista de Pokémon comprados
+- getPokemonDrawable(): mapea nombre de imagen a R.drawable
+
+--- HIROSHI (Hir0Ic) — Capa de Datos + Room + Gradle ---
+
+Archivo: app/src/main/java/com/example/juego/data/PokemonEntity.kt
+- @Entity(tableName = "pokemon_catalog")
+- Campos: id (PK), name, imageResName, cost
+- Entidad que representa a cada Pokémon del catálogo
+
+Archivo: app/src/main/java/com/example/juego/data/PurchaseEntity.kt
+- @Entity(tableName = "purchases")
+- ForeignKey a PokemonEntity
+- Campos: id (auto), userId, pokemonId
+- Índices en userId y pokemonId
+
+Archivo: app/src/main/java/com/example/juego/data/UserEntity.kt
+- @Entity(tableName = "users")
+- Campos: id (auto), username, email, password, globalScore
+- Almacena usuarios registrados y su puntaje global acumulado
+
+Archivo: app/src/main/java/com/example/juego/data/PokemonDao.kt
+- @Dao interface: todas las operaciones SQL
+- Queries de catálogo: getAllPokemon(), getPokemonById()
+- Queries de compras: getPurchasedPokemonIds(), getMostExpensivePurchased()
+- Queries de auth: loginUser(), getUserById(), getUserByUsernameOrEmail()
+- Inserts: insertAllPokemon(), insertPurchase(), insertUser()
+- Update: addToGlobalScore() — suma puntaje de sesión al global
+- getPurchasedPokemons(): lista completa de Pokémon comprados
+
+Archivo: settings.gradle.kts
+- rootProject.name = "juego"
+- include(":app")
+- Repositorios: google(), mavenCentral()
+
+Archivo: app/build.gradle.kts
+- Plugins: com.android.application, kotlin.android, com.google.devtools.ksp
+- Dependencias clave:
+  * Room (runtime, ktx, compiler via ksp)
+  * Lifecycle (viewmodel, livedata, runtime)
+  * Coroutines
+  * RecyclerView
+- compileSdk = 33, minSdk = 24
+
+Archivo: build.gradle.kts (raíz)
+- AGP 8.1.2, Kotlin 1.9.0, KSP 1.9.0-1.0.13
+
+Archivo: app/src/main/AndroidManifest.xml
+- LoginActivity como launcher (intent-filter MAIN/LAUNCHER)
+- RegisterActivity, MainActivity, TiendaPokemonActivity
+- Theme.Juego con Material3 NoActionBar
+
+Archivo: app/src/main/res/values/colors.xml
+- Paleta Pokémon: poke_yellow(#FFCC00), poke_blue(#3B4CCA)
+- Colores adicionales: error_red, success_green, green_primary
+
+--- LUIS (luchin1234) — Frontend de la Tienda + Imágenes ---
+
+Archivo: app/src/main/res/drawable/blastoise.png
+Archivo: app/src/main/res/drawable/charmander.png
+Archivo: app/src/main/res/drawable/diglett.png
+Archivo: app/src/main/res/drawable/jigglypuff.png
+Archivo: app/src/main/res/drawable/magikarp.png
+Archivo: app/src/main/res/drawable/nidoran.png
+Archivo: app/src/main/res/drawable/squirtle.png
+Archivo: app/src/main/res/drawable/vaporeon.png
+Archivo: app/src/main/res/drawable/vulpix.png
+Archivo: app/src/main/res/drawable/pikachu.jpg
+Archivo: app/src/main/res/drawable/meowth.png
+- Explicar: cada PNG representa un Pokémon, se referencian desde R.drawable
+- Cómo se cargan dinámicamente con getResources().getIdentifier()
+
+Archivo: app/src/main/java/com/example/juego/data/AppDatabase.kt (líneas 50-60)
+- POKEMON_SEED_DATA: lista de 9 Pokémon con costos progresivos
+  Magikarp(5) → Diglett(8) → Nidoran(10) → Charmander(12) →
+  Jigglypuff(14) → Squirtle(15) → Vulpix(20) → Vaporeon(25) → Blastoise(30)
+
+Archivo: app/src/main/java/com/example/juego/ui/PokemonStoreAdapter.kt
+- RecyclerView.Adapter con ViewHolder
+- updateData(): actualiza lista de Pokémon, IDs comprados, puntaje global
+- getPokemonDrawable(): mapea nombre string a R.drawable.*
+- ViewHolder.bind(): muestra imagen, nombre, costo y botón Comprar/Comprado
+- Botón deshabilitado si: ya comprado O puntaje insuficiente
+
+Archivo: app/src/main/java/com/example/juego/ui/TiendaPokemonActivity.kt
+- ViewModelProvider para obtener PokemonStoreViewModel
+- GridLayoutManager de 3 columnas
+- Observa LiveData: allPokemon + purchasedPokemonIds
+- lifecycleScope.launch para refreshGlobalScore() al abrir
+- Compra: llama a buyPokemon() + deductScore()
+- Toast de confirmación o error según PurchaseResult
+
+Archivo: app/src/main/res/layout/activity_tienda_pokemon.xml
+- LinearLayout vertical con padding
+- TextView título "Tienda Pokémon", TextView puntaje global
+- RecyclerView con weight=1 para ocupar espacio restante
+
+Archivo: app/src/main/res/layout/item_pokemon_store.xml
+- ConstraintLayout con fondo item_pokemon_bg
+- ImageView del Pokémon (80dp), nombre, costo, botón comprar
+- item_pokemon_bg.xml: shape drawable con bordes redondeados
+
+============================================================
+GRUPO 2: JUEGO PRINCIPAL (2 personas)
+============================================================
+
+--- ALONSO (Shadow1825) ---
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 27-31)
+- Variables: sessionScore, globalScore, indicePikachu, indiceMeowth
+- imageArray: ArrayList de 9 ImageViews (grid 3x3)
+- gameState: enum IDLE/PLAYING/ENDED
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 262-289)
+- Función hideImages() - lógica PRINCIPAL del juego:
+  * Oculta todas las imágenes
+  * Elige posición aleatoria para Pikachu (indicePikachu)
+  * Muestra Pikachu con el drawable del Pokémon activo
+  * Elige posición diferente para Meowth (do-while)
+  * Evita que coincidan en la misma casilla
+  * Repite cada 1 segundo (handler.postDelayed)
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 129-140)
+- Bucle for que asigna setOnClickListener a cada ImageView:
+  * Si toca indicePikachu -> score += 1
+  * Si toca indiceMeowth -> score -= 2
+
+Archivo: app/src/main/res/layout/activity_main.xml (líneas 66-172)
+- GridLayout de 9 ImageViews (3 filas x 3 columnas)
+- Cada ImageView de 100dp x 100dp
+
+--- VALENTINO — Ciclo de Vida del Juego + GameState ---
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 35-59)
+- Enum GameState: IDLE, PLAYING, ENDED
+- onCreate(): verifica sesión con SessionManager
+- lifecycleScope.launch carga usuario desde Room
+- Si no hay sesión: redirige a LoginActivity
+- Si usuario no existe en DB: cierra sesión y redirige
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 162-209)
+- startGame():
+  * Cancel timer previo (seguridad anti-duplicados)
+  * gameState = PLAYING
+  * Resetea sessionScore, lastSessionScore, endDialogShown
+  * Carga el drawable del Pokémon activo en todas las 9 casillas
+  * Crea CountDownTimer(75000, 1000) — 1 minuto 15 segundos
+  * Inicia hideImages() para el ciclo de apariciones
+- stopGame():
+  * gameState = IDLE
+  * Cancela countDownTimer y handler
+  * Oculta todas las imágenes
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 269-286)
+- updateScoreDisplay(): scoreText muestra "Sesión: X | Global: Y"
+- onResume(): actualiza globalScore desde Room
+  * Si showDialogPending: muestra showEndGameDialog()
+  * Si gameState ENDED + dialog ya mostrado: showPlayAgainDialog()
+
+Archivo: app/src/main/java/com/example/juego/data/GameStateManager.kt
+- Objeto singleton con sessionScore
+- Compartido entre MainActivity y TiendaPokemonActivity
+- Se resetea a 0 en startGame() y al sumar al global
+
+============================================================
+GRUPO 3: AUTENTICACIÓN (Kevin)
+============================================================
+
+--- KEVIN (Kevin-VG) — Autenticación Completa ---
+
+Archivo: app/src/main/java/com/example/juego/LoginActivity.kt (completo)
+- Validación de campos (usuario/correo + contraseña)
+- lifecycleScope.launch { PokemonRepository.loginUser() }
+- SessionManager.saveSession(userId) — persiste sesión
+- Redirección a MainActivity si login exitoso
+- Redirección a RegisterActivity desde link
+
+Archivo: app/src/main/java/com/example/juego/RegisterActivity.kt (completo)
+- Validación de campos:
+  * Usuario >= 3 caracteres
+  * Email con formato válido (Patterns.EMAIL_ADDRESS)
+  * Contraseña >= 6 caracteres
+- lifecycleScope.launch { PokemonRepository.registerUser() }
+- Maneja RegisterResult: Success (vuelve a Login) o Duplicate (Toast error)
+
+Archivo: app/src/main/java/com/example/juego/SessionManager.kt
+- SharedPreferences para sesión persistente entre reinicios
+- saveSession(userId), getUserId(), isLoggedIn(), logout()
+- Se usa en todas las Activities para saber quién está logueado
+
+Archivo: app/src/main/java/com/example/juego/data/PokemonRepository.kt (líneas 39-60)
+- registerUser(): verifica duplicados por username o email, inserta UserEntity
+- loginUser(): busca por username O email + password
+- getUserById(): obtiene datos completos del usuario (globalScore)
+
+Archivo: app/src/main/java/com/example/juego/data/PokemonDao.kt (líneas 38-52)
+- insertUser(): @Insert con OnConflictStrategy.IGNORE
+- getUserByUsernameOrEmail(): evita duplicados
+- loginUser(): query con OR para username/email
+
+Archivo: app/src/main/java/com/example/juego/data/UserEntity.kt
+- Data class @Entity(tableName = "users")
+- id (auto), username, email, password, globalScore
+
+Archivo: app/src/main/res/layout/activity_login.xml
+- Material Design con TextInputLayout + TextInputEditText
+- Botón "Ingresar" estilo MaterialButton
+- Link "¿No tienes cuenta? Regístrate aquí"
+
+Archivo: app/src/main/res/layout/activity_register.xml
+- 3 campos: usuario, correo, contraseña
+- Validación visual con error en TextInputLayout
+- Link "¿Ya tienes cuenta? Inicia sesión"
+
+============================================================
+GRUPO 4: TEMPORIZADOR (Pablo)
+============================================================
+
+--- PABLO (Pablosbstn) ---
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 174-201)
+- CountDownTimer(75000, 1000) = 75 segundos = 1 minuto 15 segundos
+- onTick(): calcula minutos/segundos, formatea como MM:SS
+- timeText.text = "Tiempo: 01:15" → "Tiempo: 00:00"
+- onFinish(): gameState = ENDED, oculta imágenes, suma puntaje global
+- Llama a tryShowEndGameDialog()
+
+Archivo: app/src/main/res/layout/activity_main.xml (líneas 64-65)
+- TextView timeText: muestra "Tiempo: 01:15"
+
+Archivo: temporizador/temporizador.py (prototipo original)
+- Script Python con tkinter que simula el temporizador
+- Cuenta regresiva 01:15
+- Al llegar a 0: muestra "PERDISTE", "¡GANASTE!" o "JUEGO TERMINADO"
+
+============================================================
+GRUPO 5: VICTORIA/DERROTA (Marco)
+============================================================
+
+--- MARCO (xWrkz) ---
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 222-260)
+- Función showEndGameDialog():
+  * lastSessionScore >= 30 -> "¡GANASTE!" + mensaje felicitaciones
+  * lastSessionScore <= 0 -> "PERDISTE" + mensaje de intentar de nuevo
+  * Entre 1 y 29 -> "Juego Terminado" + "Necesitas 30 para ganar"
+  * Muestra puntaje global acumulado
+  * 3 botones: Reiniciar juego / Ir a la tienda / Salir
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 262-277)
+- Función showPlayAgainDialog():
+  * Al volver de la tienda con juego terminado
+  * "¿Quieres jugar de nuevo?"
+  * 3 botones: Jugar / Ir a la tienda / Salir
+
+Archivo: app/src/main/java/com/example/juego/MainActivity.kt (líneas 392-408)
+- onResume():
+  * Actualiza globalScore desde Room
+  * Si hay pending: muestra showEndGameDialog()
+  * Si juego terminó: muestra showPlayAgainDialog()
+
+============================================================
+RESUMEN DE FUNCIONES PRINCIPALES POR ARCHIVO
+============================================================
+
+MainActivity.kt:
+- onCreate() - arranque, sesión, setup del juego
+- setupGame() - inicializa 9 ImageViews y sus listeners
+- startGame() - resetea puntaje, inicia timer, hideImages()
+- stopGame() - cancela timer y handler
+- hideImages() - muestra Pikachu + Meowth en posiciones aleatorias
+- showEndGameDialog() - resultado (GANASTE/PERDISTE)
+- showPlayAgainDialog() - jugar de nuevo al volver de tienda
+- loadMostExpensivePokemon() - carga Flow del Pokémon más caro
+- cambiarPokemon() - diálogo para elegir Pokémon activo
+- updateScoreDisplay() - muestra puntaje sesión + global
+- onResume() - actualiza scores, muestra diálogos pendientes
+
+data/AppDatabase.kt:
+- getInstance() - singleton Room
+- SeedCallback - inserta 9 Pokémon al crear DB
+- POKEMON_SEED_DATA - catálogo de Pokémon
+
+data/PokemonDao.kt:
+- Queries: getAllPokemon, getMostExpensivePurchased, loginUser
+- Insert: insertAllPokemon, insertPurchase, insertUser
+- Update: addToGlobalScore, isPokemonPurchased
+
+data/PokemonRepository.kt:
+- buyPokemon() - compra con verificación
+- registerUser(), loginUser() - auth
+- getInstance() - singleton
+
+ui/PokemonStoreAdapter.kt:
+- updateData() - refresca lista de Pokémon
+- ViewHolder.bind() - muestra card de cada Pokémon
+- getPokemonDrawable() - mapea string a R.drawable
+
+============================================================
+ORDEN DE EXPOSICIÓN SUGERIDO
+============================================================
+
+1. Kevin (Autenticación) -> Login, Register, sesión
+2. Pablo (Temporizador) -> CountDownTimer 01:15
+3. Alonso + Valentino (Juego Principal) -> Pikachu/Meowth, grid, clicks
+4. Marco (Victoria/Derrota) -> Resultados GANASTE/PERDISTE
+5. Luis + Hiroshi + Gerardo (Tienda) -> Catálogo, compra, Room
+
+============================================================
