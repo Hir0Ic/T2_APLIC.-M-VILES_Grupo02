@@ -303,8 +303,6 @@ class MainActivity : AppCompatActivity() {
                     .getMostExpensivePurchased(userId)
                     .collect { pokemon ->
                         if (pokemon != null) {
-                            val resId = getPokemonDrawable(pokemon.imageResName)
-                            ivPurchased.setImageResource(resId)
                             val prefs = getSharedPreferences("sesion", MODE_PRIVATE)
                             if (!prefs.getBoolean("manual_pokemon_selection", false)) {
                                 activePokemonImage = pokemon.imageResName
@@ -314,6 +312,8 @@ class MainActivity : AppCompatActivity() {
                                     .putString("active_pokemon_name", activePokemonName)
                                     .apply()
                             }
+                            val resId = getPokemonDrawable(activePokemonImage)
+                            ivPurchased.setImageResource(resId)
                             tvPurchased.text = "Tu Pokémon: $activePokemonName"
                             purchasedSection.visibility = View.VISIBLE
                         } else {
