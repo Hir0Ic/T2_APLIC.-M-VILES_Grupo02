@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.juego.data.GameStateManager
 import com.example.juego.data.PokemonRepository
+import com.example.juego.data.UserEntity
 import com.example.juego.ui.TiendaPokemonActivity
 import kotlinx.coroutines.launch
 import java.util.*
@@ -34,15 +35,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvWelcomeUser: TextView
     private lateinit var btnLogout: Button
 
-    private lateinit var dbHelper: DatabaseHelper
     private lateinit var sessionManager: SessionManager
-    private var activeUser: Usuario? = null
+    private var activeUser: UserEntity? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         sessionManager = SessionManager(this)
-        dbHelper = DatabaseHelper(this)
 
         if (!sessionManager.isLoggedIn()) {
             launchLoginActivity()
@@ -52,24 +51,50 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val userId = sessionManager.getUserId()
-        activeUser = dbHelper.getUsuario(userId)
-        
-        if (activeUser == null) {
-            sessionManager.logout()
-            launchLoginActivity()
-            return
+
+        lifecycleScope.launch {
+            val user = PokemonRepository.getInstance(this@MainActivity).getUserById(userId)
+            if (user == null) {
+                sessionManager.logout()
+                launchLoginActivity()
+                return@launch
+            }
+            activeUser = user
+            score = user.score
+            GameStateManager.score = score
+
+            runOnUiThread {
+                timeText = findViewById<TextView>(R.id.timeText)
+                scoreText = findViewById<TextView>(R.id.scoreText)
+                tvWelcomeUser = findViewById<TextView>(R.id.tvWelcomeUser)
+                btnLogout = findViewById<Button>(R.id.btnLogout)
+
+                tvWelcomeUser.text = "¡Hola, ${user.username}!"
+                scoreText.text = "Puntaje: $score"
+
+                setupGame()
+
+                btnLogout.setOnClickListener {
+                    lifecycleScope.launch {
+                        PokemonRepository.getInstance(this@MainActivity)
+                            .updateUserScore(sessionManager.getUserId(), score)
+                    }
+                    sessionManager.logout()
+                    launchLoginActivity()
+                }
+
+                val btnTienda = findViewById<android.widget.Button>(R.id.btnTienda)
+                btnTienda.setOnClickListener {
+                    val intent = Intent(this@MainActivity, TiendaPokemonActivity::class.java)
+                    startActivity(intent)
+                }
+
+                loadMostExpensivePokemon()
+            }
         }
+    }
 
-        score = activeUser!!.puntaje
-
-        timeText = findViewById<TextView>(R.id.timeText)
-        scoreText = findViewById<TextView>(R.id.scoreText)
-        tvWelcomeUser = findViewById<TextView>(R.id.tvWelcomeUser)
-        btnLogout = findViewById<Button>(R.id.btnLogout)
-
-        tvWelcomeUser.text = "¡Hola, ${activeUser!!.nombreUsuario}!"
-        scoreText.text = "Puntaje: $score"
-
+    private fun setupGame() {
         val imageView: ImageView = findViewById(R.id.imageView)
         imageView.setImageResource(R.drawable.pikachu)
         val imageView2: ImageView = findViewById(R.id.imageView2)
@@ -113,17 +138,13 @@ class MainActivity : AppCompatActivity() {
                 alert.setTitle("Juego terminado")
                 alert.setMessage("Reiniciar el juego?")
                 alert.setPositiveButton("Si") { dialog, which ->
-                    activeUser?.let {
-                        dbHelper.actualizarPuntaje(it.id, score)
-                    }
+                    saveScore()
                     val intent = intent
                     finish()
                     startActivity(intent)
                 }
                 alert.setNegativeButton("No") { dialog, which ->
-                    activeUser?.let {
-                        dbHelper.actualizarPuntaje(it.id, score)
-                    }
+                    saveScore()
                     Toast.makeText(this@MainActivity, "Juego Terminado =/", Toast.LENGTH_LONG).show()
                 }
                 alert.show()
@@ -134,22 +155,6 @@ class MainActivity : AppCompatActivity() {
             }
 
         }.start()
-
-        btnLogout.setOnClickListener {
-            activeUser?.let {
-                dbHelper.actualizarPuntaje(it.id, score)
-            }
-            sessionManager.logout()
-            launchLoginActivity()
-        }
-
-        val btnTienda = findViewById<android.widget.Button>(R.id.btnTienda)
-        btnTienda.setOnClickListener {
-            val intent = Intent(this, TiendaPokemonActivity::class.java)
-            startActivity(intent)
-        }
-
-        loadMostExpensivePokemon()
     }
 
     fun hideImages() {
@@ -171,9 +176,13 @@ class MainActivity : AppCompatActivity() {
         score = score + 1
         scoreText.text = "Puntaje: $score"
         GameStateManager.score = score
-        
-        activeUser?.let {
-            dbHelper.actualizarPuntaje(it.id, score)
+        saveScore()
+    }
+
+    private fun saveScore() {
+        lifecycleScope.launch {
+            PokemonRepository.getInstance(this@MainActivity)
+                .updateUserScore(sessionManager.getUserId(), score)
         }
     }
 

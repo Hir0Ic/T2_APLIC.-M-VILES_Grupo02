@@ -5,9 +5,13 @@ import android.util.Patterns
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.juego.data.PokemonRepository
+import com.example.juego.data.RegisterResult
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -20,15 +24,10 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var btnRegister: MaterialButton
     private lateinit var tvLoginRedirect: TextView
 
-    private lateinit var dbHelper: DatabaseHelper
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        dbHelper = DatabaseHelper(this)
-
-        // Inicializar vistas
         etRegUsername = findViewById(R.id.etRegUsername)
         etRegEmail = findViewById(R.id.etRegEmail)
         etRegPassword = findViewById(R.id.etRegPassword)
@@ -38,24 +37,28 @@ class RegisterActivity : AppCompatActivity() {
         btnRegister = findViewById(R.id.btnRegister)
         tvLoginRedirect = findViewById(R.id.tvLoginRedirect)
 
-        // Acción de registro
         btnRegister.setOnClickListener {
             if (validarCampos()) {
                 val username = etRegUsername.text.toString().trim()
                 val email = etRegEmail.text.toString().trim()
                 val password = etRegPassword.text.toString().trim()
 
-                val resultId = dbHelper.registrarUsuario(username, email, password)
-                if (resultId != -1L) {
-                    Toast.makeText(this, "¡Registro Exitoso! Inicia sesión para continuar", Toast.LENGTH_LONG).show()
-                    finish() // Regresar a la pantalla de Login
-                } else {
-                    Toast.makeText(this, "El nombre de usuario o correo ya se encuentra registrado", Toast.LENGTH_LONG).show()
+                lifecycleScope.launch {
+                    val result = PokemonRepository.getInstance(this@RegisterActivity)
+                        .registerUser(username, email, password)
+                    when (result) {
+                        is RegisterResult.Success -> {
+                            Toast.makeText(this@RegisterActivity, "¡Registro Exitoso! Inicia sesión para continuar", Toast.LENGTH_LONG).show()
+                            finish()
+                        }
+                        is RegisterResult.Duplicate -> {
+                            Toast.makeText(this@RegisterActivity, "El nombre de usuario o correo ya se encuentra registrado", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             }
         }
 
-        // Regresar a iniciar sesión
         tvLoginRedirect.setOnClickListener {
             finish()
         }
@@ -67,7 +70,6 @@ class RegisterActivity : AppCompatActivity() {
         val email = etRegEmail.text.toString().trim()
         val password = etRegPassword.text.toString().trim()
 
-        // Validar usuario
         if (username.isEmpty()) {
             tilRegUsername.error = "Ingresa un nombre de usuario"
             valido = false
@@ -78,7 +80,6 @@ class RegisterActivity : AppCompatActivity() {
             tilRegUsername.error = null
         }
 
-        // Validar correo
         if (email.isEmpty()) {
             tilRegEmail.error = "Ingresa un correo electrónico"
             valido = false
@@ -89,7 +90,6 @@ class RegisterActivity : AppCompatActivity() {
             tilRegEmail.error = null
         }
 
-        // Validar contraseña
         if (password.isEmpty()) {
             tilRegPassword.error = "Ingresa una contraseña"
             valido = false
