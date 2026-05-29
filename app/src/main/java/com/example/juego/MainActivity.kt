@@ -126,9 +126,9 @@ class MainActivity : AppCompatActivity() {
 
         hideImages()
 
-        object : CountDownTimer(15500, 1000) {
+        object : CountDownTimer(75000, 1000) {
             override fun onFinish() {
-                timeText.text = "Tiempo: 0 seg"
+                timeText.text = "Tiempo: 00:00"
                 handler.removeCallbacks(runnable)
                 for (image in imageArray) {
                     image.visibility = View.INVISIBLE
@@ -151,7 +151,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTick(millisUntilFinished: Long) {
-                timeText.text = "Tiempo: " + millisUntilFinished / 1000 + " seg"
+                val totalSeconds = millisUntilFinished / 1000
+                val minutes = totalSeconds / 60
+                val seconds = totalSeconds % 60
+                timeText.text = String.format("Tiempo: %02d:%02d", minutes, seconds)
             }
 
         }.start()
