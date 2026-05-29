@@ -176,7 +176,15 @@ class MainActivity : AppCompatActivity() {
 
         hideImages()
 
+        // --- TEMPORIZADOR (Pablo) ---
+        // CountDownTimer: 75000ms = 75 segundos = 1 minuto 15 segundos.
+        // Primer parámetro: duración total en ms.
+        // Segundo parámetro: intervalo de tick en ms (1000 = 1 segundo).
+        // Inicia automáticamente con .start().
         countDownTimer = object : CountDownTimer(75000, 1000) {
+            // --- onFinish(): SE EJECUTA AL LLEGAR A 00:00 ---
+            // Cambia estado a ENDED, oculta imágenes, suma sesión al global.
+            // Muestra el diálogo de resultado (GANASTE / PERDISTE / Juego Terminado).
             override fun onFinish() {
                 gameState = GameState.ENDED
                 timeText.text = "Tiempo: 00:00"
@@ -198,6 +206,9 @@ class MainActivity : AppCompatActivity() {
                 tryShowEndGameDialog()
             }
 
+            // --- onTick(): CADA 1 SEGUNDO ---
+            // Calcula minutos y segundos restantes.
+            // Formatea como MM:SS (ej: "Tiempo: 01:15" → "Tiempo: 00:59" → ...).
             override fun onTick(millisUntilFinished: Long) {
                 val totalSeconds = millisUntilFinished / 1000
                 val minutes = totalSeconds / 60
@@ -310,6 +321,12 @@ class MainActivity : AppCompatActivity() {
         scoreText.text = "Sesión: $sessionScore  |  Global: $globalScore"
     }
 
+    // --- loadMostExpensivePokemon(): CARGA EL POKÉMÓN MÁS CARO ---
+    // Usa repeatOnLifecycle(STARTED) para observar cambios en la DB mientras la Activity está activa.
+    // El Flow de Room emite cada vez que se inserta una compra nueva.
+    // Si el usuario NO ha hecho selección manual (manual_pokemon_selection = false),
+    // auto-asigna el Pokémon más caro como activo en el grid.
+    // La imagen pequeña y el texto "Tu Pokémon: X" muestran el Pokémon activo (activePokemonImage/Name).
     private fun loadMostExpensivePokemon() {
         val ivPurchased = findViewById<ImageView>(R.id.ivPurchasedPokemon)
         val tvPurchased = findViewById<TextView>(R.id.tvPurchasedPokemon)
@@ -350,6 +367,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // --- cambiarPokemon(): DIÁLOGO PARA CAMBIAR POKÉMON ACTIVO ---
+    // Vinculado al layout via android:onClick="cambiarPokemon".
+    // Consulta los Pokémon comprados por el usuario.
+    // Muestra un AlertDialog con la lista de nombres.
+    // Al seleccionar: actualiza activePokemonImage/Name y persiste en SharedPreferences.
+    // Marca manual_pokemon_selection = true para que el Flow no sobreescriba la selección.
     fun cambiarPokemon(unused: View) {
         lifecycleScope.launch {
             val userId = sessionManager.getUserId()
@@ -383,6 +406,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // --- getPokemonDrawable(): MAPEA NOMBRE DE IMAGEN A R.drawable.* ---
+    // Convierte un String ("vaporeon") al recurso drawable (R.drawable.vaporeon).
+    // Más confiable que resources.getIdentifier() que puede fallar silenciosamente.
+    // Incluye fallback a pikachu si el nombre no está en la lista.
     private fun getPokemonDrawable(imageName: String): Int {
         return when (imageName) {
             "magikarp" -> R.drawable.magikarp

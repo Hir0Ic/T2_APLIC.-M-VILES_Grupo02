@@ -38,6 +38,7 @@
 
     </LinearLayout>
 
+    <!-- TEMPORIZADOR (Pablo): Muestra la cuenta regresiva en formato MM:SS -->
     <TextView
         android:id="@+id/timeText"
         android:layout_width="wrap_content"
