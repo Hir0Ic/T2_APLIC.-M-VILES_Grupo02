@@ -9,7 +9,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -29,6 +28,9 @@ class MainActivity : AppCompatActivity() {
     var imageArray = ArrayList<ImageView>()
     var handler = Handler()
     var runnable = Runnable {  }
+
+    private var indicePikachu = -1
+    private var indiceMeowth = -1
 
     private lateinit var timeText: TextView
     private lateinit var scoreText: TextView
@@ -124,6 +126,19 @@ class MainActivity : AppCompatActivity() {
         imageArray.add(imageView8)
         imageArray.add(imageView9)
 
+        for (i in 0 until imageArray.size) {
+            imageArray[i].setOnClickListener {
+                if (i == indicePikachu) {
+                    score += 1
+                } else if (i == indiceMeowth) {
+                    score -= 2
+                }
+                scoreText.text = "Puntaje: $score"
+                GameStateManager.score = score
+                saveScore()
+            }
+        }
+
         hideImages()
 
         object : CountDownTimer(75000, 1000) {
@@ -134,18 +149,25 @@ class MainActivity : AppCompatActivity() {
                     image.visibility = View.INVISIBLE
                 }
 
+                saveScore()
+
+                val (titulo, mensaje) = when {
+                    score >= 30 -> "¡GANASTE!" to "Felicidades, lograste $score puntos."
+                    score <= 0 -> "PERDISTE" to "Tu puntaje es $score. Inténtalo de nuevo."
+                    else -> "Juego Terminado" to "Obtuviste $score puntos. Necesitas 30 para ganar."
+                }
+
                 val alert = AlertDialog.Builder(this@MainActivity)
-                alert.setTitle("Juego terminado")
-                alert.setMessage("Reiniciar el juego?")
-                alert.setPositiveButton("Si") { dialog, which ->
-                    saveScore()
+                alert.setTitle(titulo)
+                alert.setMessage(mensaje)
+                alert.setCancelable(false)
+                alert.setPositiveButton("Reiniciar juego") { _, _ ->
                     val intent = intent
                     finish()
                     startActivity(intent)
                 }
-                alert.setNegativeButton("No") { dialog, which ->
-                    saveScore()
-                    Toast.makeText(this@MainActivity, "Juego Terminado =/", Toast.LENGTH_LONG).show()
+                alert.setNegativeButton("Salir") { _, _ ->
+                    finish()
                 }
                 alert.show()
             }
@@ -166,20 +188,23 @@ class MainActivity : AppCompatActivity() {
                 for (image in imageArray) {
                     image.visibility = View.INVISIBLE
                 }
+
                 val random = Random()
-                val randomIndex = random.nextInt(9)
-                imageArray[randomIndex].visibility = View.VISIBLE
+                indicePikachu = random.nextInt(9)
+                imageArray[indicePikachu].setImageResource(R.drawable.pikachu)
+                imageArray[indicePikachu].visibility = View.VISIBLE
+
+                do {
+                    indiceMeowth = random.nextInt(9)
+                } while (indiceMeowth == indicePikachu)
+
+                imageArray[indiceMeowth].setImageResource(R.drawable.meowth)
+                imageArray[indiceMeowth].visibility = View.VISIBLE
+
                 handler.postDelayed(runnable, 1000)
             }
         }
         handler.post(runnable)
-    }
-
-    fun increaseScore(view: View) {
-        score = score + 1
-        scoreText.text = "Puntaje: $score"
-        GameStateManager.score = score
-        saveScore()
     }
 
     private fun saveScore() {
