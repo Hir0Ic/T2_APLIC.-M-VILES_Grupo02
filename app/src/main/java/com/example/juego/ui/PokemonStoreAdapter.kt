@@ -1,6 +1,5 @@
 package com.example.juego.ui
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -35,6 +34,23 @@ class PokemonStoreAdapter(
 
     override fun getItemCount(): Int = pokemonList.size
 
+    private fun getPokemonDrawable(imageName: String): Int {
+        return when (imageName) {
+            "magikarp" -> R.drawable.magikarp
+            "diglett" -> R.drawable.diglett
+            "nidoran" -> R.drawable.nidoran
+            "charmander" -> R.drawable.charmander
+            "jigglypuff" -> R.drawable.jigglypuff
+            "squirtle" -> R.drawable.squirtle
+            "vulpix" -> R.drawable.vulpix
+            "vaporeon" -> R.drawable.vaporeon
+            "blastoise" -> R.drawable.blastoise
+            "pikachu" -> R.drawable.pikachu
+            "meowth" -> R.drawable.meowth
+            else -> R.drawable.pikachu
+        }
+    }
+
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val ivPokemon = itemView.findViewById<android.widget.ImageView>(R.id.ivPokemon)
         private val tvName = itemView.findViewById<android.widget.TextView>(R.id.tvPokemonName)
@@ -43,12 +59,7 @@ class PokemonStoreAdapter(
 
         fun bind(pokemon: PokemonEntity) {
             val context = itemView.context
-            val resId = context.resources.getIdentifier(
-                pokemon.imageResName, "drawable", context.packageName
-            )
-            if (resId != 0) {
-                ivPokemon.setImageResource(resId)
-            }
+            ivPokemon.setImageResource(getPokemonDrawable(pokemon.imageResName))
 
             tvName.text = pokemon.name
             tvCost.text = "Costo: ${pokemon.cost} pts"

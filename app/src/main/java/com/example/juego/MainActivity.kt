@@ -202,10 +202,8 @@ class MainActivity : AppCompatActivity() {
                     .getMostExpensivePurchased(userId)
                     .collect { pokemon ->
                         if (pokemon != null) {
-                            val resId = resources.getIdentifier(
-                                pokemon.imageResName, "drawable", packageName
-                            )
-                            if (resId != 0) ivPurchased.setImageResource(resId)
+                            val resId = getPokemonDrawable(pokemon.imageResName)
+                            ivPurchased.setImageResource(resId)
                             tvPurchased.text = "Tu Pokémon: ${pokemon.name}"
                             purchasedSection.visibility = View.VISIBLE
                         } else {
@@ -213,6 +211,23 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
             }
+        }
+    }
+
+    private fun getPokemonDrawable(imageName: String): Int {
+        return when (imageName) {
+            "magikarp" -> R.drawable.magikarp
+            "diglett" -> R.drawable.diglett
+            "nidoran" -> R.drawable.nidoran
+            "charmander" -> R.drawable.charmander
+            "jigglypuff" -> R.drawable.jigglypuff
+            "squirtle" -> R.drawable.squirtle
+            "vulpix" -> R.drawable.vulpix
+            "vaporeon" -> R.drawable.vaporeon
+            "blastoise" -> R.drawable.blastoise
+            "pikachu" -> R.drawable.pikachu
+            "meowth" -> R.drawable.meowth
+            else -> R.drawable.pikachu
         }
     }
 
