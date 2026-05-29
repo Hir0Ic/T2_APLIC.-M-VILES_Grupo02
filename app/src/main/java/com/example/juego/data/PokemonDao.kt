@@ -38,9 +38,19 @@ interface PokemonDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertUser(user: UserEntity): Long
 
-    @Query("SELECT * FROM users WHERE username = :username AND password = :password LIMIT 1")
-    suspend fun login(username: String, password: String): UserEntity?
+    @Query("SELECT * FROM users WHERE username = :username OR email = :email LIMIT 1")
+    suspend fun getUserByUsernameOrEmail(username: String, email: String): UserEntity?
 
-    @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
-    suspend fun getUserByUsername(username: String): UserEntity?
+    @Query("""
+        SELECT * FROM users 
+        WHERE (username = :credential OR email = :credential) 
+        AND password = :password LIMIT 1
+    """)
+    suspend fun loginUser(credential: String, password: String): UserEntity?
+
+    @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
+    suspend fun getUserById(userId: Int): UserEntity?
+
+    @Query("UPDATE users SET score = :newScore WHERE id = :userId")
+    suspend fun updateUserScore(userId: Int, newScore: Int)
 }

@@ -10,24 +10,22 @@ import androidx.lifecycle.viewModelScope
 class PokemonStoreViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = PokemonRepository.getInstance(application)
+    private val sessionManager = com.example.juego.SessionManager(application)
 
     val currentUserId: Int
-        get() = GameStateManager.currentUserId
-
-    val currentScore: Int
-        get() = GameStateManager.score
+        get() = sessionManager.getUserId()
 
     val allPokemon: LiveData<List<PokemonEntity>> by lazy {
         repository.getAllPokemon().asLiveData(viewModelScope.coroutineContext)
     }
 
     val purchasedPokemonIds: LiveData<List<Int>> by lazy {
-        repository.getPurchasedPokemonIds(GameStateManager.currentUserId)
+        repository.getPurchasedPokemonIds(currentUserId)
             .asLiveData(viewModelScope.coroutineContext)
     }
 
     val mostExpensivePokemon: LiveData<PokemonEntity?> by lazy {
-        repository.getMostExpensivePurchased(GameStateManager.currentUserId)
+        repository.getMostExpensivePurchased(currentUserId)
             .asLiveData(viewModelScope.coroutineContext)
     }
 
@@ -35,9 +33,7 @@ class PokemonStoreViewModel(application: Application) : AndroidViewModel(applica
     val buyResult: LiveData<PurchaseResult> = _buyResult
 
     suspend fun buyPokemon(pokemon: PokemonEntity): Boolean {
-        val result = repository.buyPokemon(
-            GameStateManager.currentUserId, pokemon, GameStateManager.score
-        )
+        val result = repository.buyPokemon(currentUserId, pokemon, GameStateManager.score)
         _buyResult.postValue(result)
         return result is PurchaseResult.Success
     }

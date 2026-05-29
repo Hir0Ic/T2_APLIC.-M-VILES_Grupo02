@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [PokemonEntity::class, PurchaseEntity::class, UserEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "pokemon_game.db"
                 )
+                    .fallbackToDestructiveMigration()
                     .addCallback(SeedCallback())
                     .build()
                     .also { INSTANCE = it }

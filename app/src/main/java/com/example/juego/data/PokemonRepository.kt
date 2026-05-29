@@ -2,7 +2,7 @@ package com.example.juego.data
 
 import android.content.Context
 
-class PokemonRepository(private val context: Context) {
+class PokemonRepository(context: Context) {
 
     private val dao = AppDatabase.getInstance(context).pokemonDao()
 
@@ -24,6 +24,30 @@ class PokemonRepository(private val context: Context) {
         return dao.isPokemonPurchased(userId, pokemonId) > 0
     }
 
+    suspend fun registerUser(username: String, email: String, password: String): RegisterResult {
+        val existing = dao.getUserByUsernameOrEmail(username.trim(), email.trim().lowercase())
+        if (existing != null) return RegisterResult.Duplicate
+        val user = UserEntity(
+            username = username.trim(),
+            email = email.trim().lowercase(),
+            password = password
+        )
+        dao.insertUser(user)
+        return RegisterResult.Success
+    }
+
+    suspend fun loginUser(credential: String, password: String): UserEntity? {
+        return dao.loginUser(credential.trim(), password)
+    }
+
+    suspend fun getUserById(userId: Int): UserEntity? {
+        return dao.getUserById(userId)
+    }
+
+    suspend fun updateUserScore(userId: Int, score: Int) {
+        dao.updateUserScore(userId, score)
+    }
+
     companion object {
         @Volatile
         private var INSTANCE: PokemonRepository? = null
@@ -40,4 +64,9 @@ sealed class PurchaseResult {
     object Success : PurchaseResult()
     object NotEnoughPoints : PurchaseResult()
     object AlreadyPurchased : PurchaseResult()
+}
+
+sealed class RegisterResult {
+    object Success : RegisterResult()
+    object Duplicate : RegisterResult()
 }

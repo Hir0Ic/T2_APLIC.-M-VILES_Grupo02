@@ -133,11 +133,14 @@ class MainActivity : AppCompatActivity() {
         val ivPurchased = findViewById<ImageView>(R.id.ivPurchasedPokemon)
         val tvPurchased = findViewById<TextView>(R.id.tvPurchasedPokemon)
         val purchasedSection = findViewById<LinearLayout>(R.id.purchasedSection)
+        val sessionManager = SessionManager(this)
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val userId = sessionManager.getUserId()
+                if (userId == -1) return@repeatOnLifecycle
                 PokemonRepository.getInstance(this@MainActivity)
-                    .getMostExpensivePurchased(GameStateManager.currentUserId)
+                    .getMostExpensivePurchased(userId)
                     .collect { pokemon ->
                         if (pokemon != null) {
                             val resId = resources.getIdentifier(
