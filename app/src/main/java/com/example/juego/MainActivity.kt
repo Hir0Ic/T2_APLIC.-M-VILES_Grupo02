@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private var gameState = GameState.IDLE
     private var showDialogPending = false
     private var lastSessionScore = 0
+    private var endDialogShown = false
 
     private lateinit var timeText: TextView
     private lateinit var scoreText: TextView
@@ -161,6 +162,8 @@ class MainActivity : AppCompatActivity() {
     private fun startGame() {
         gameState = GameState.PLAYING
         showDialogPending = false
+        endDialogShown = false
+        lastSessionScore = 0
         sessionScore = 0
         GameStateManager.sessionScore = 0
         updateScoreDisplay()
@@ -191,6 +194,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread { updateScoreDisplay() }
                 }
                 showDialogPending = true
+                tryShowEndGameDialog()
             }
 
             override fun onTick(millisUntilFinished: Long) {
@@ -211,7 +215,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun tryShowEndGameDialog() {
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            showDialogPending = false
+            showEndGameDialog()
+        }
+    }
+
     private fun showEndGameDialog() {
+        if (endDialogShown) return
+        endDialogShown = true
+        showDialogPending = false
         val (titulo, mensaje) = when {
             lastSessionScore >= 30 -> "¡GANASTE!" to "Felicidades, lograste $lastSessionScore puntos.\nPuntaje global: $globalScore"
             lastSessionScore <= 0 -> "PERDISTE" to "Tu puntaje es $lastSessionScore. Inténtalo de nuevo.\nPuntaje global: $globalScore"
@@ -386,7 +400,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread { updateScoreDisplay() }
                 }
             }
-            if (showDialogPending) {
+            if (showDialogPending && !endDialogShown) {
                 showDialogPending = false
                 showEndGameDialog()
             }
