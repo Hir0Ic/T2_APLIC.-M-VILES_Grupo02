@@ -43,11 +43,9 @@ class PokemonStoreViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun refreshGlobalScore() {
-        viewModelScope.launch {
-            val user = repository.getUserById(currentUserId)
-            globalScore = user?.globalScore ?: globalScore
-        }
+    suspend fun refreshGlobalScore() {
+        val user = repository.getUserById(currentUserId)
+        globalScore = user?.globalScore ?: globalScore
     }
 
     suspend fun buyPokemon(pokemon: PokemonEntity): Boolean {

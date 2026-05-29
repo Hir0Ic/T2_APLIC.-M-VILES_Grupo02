@@ -35,7 +35,8 @@ class MainActivity : AppCompatActivity() {
     private var indicePikachu = -1
     private var indiceMeowth = -1
     private var gameState = GameState.IDLE
-    private var endDialogShown = false
+    private var showDialogPending = false
+    private var lastSessionScore = 0
 
     private lateinit var timeText: TextView
     private lateinit var scoreText: TextView
@@ -159,7 +160,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startGame() {
         gameState = GameState.PLAYING
-        endDialogShown = false
+        showDialogPending = false
         sessionScore = 0
         GameStateManager.sessionScore = 0
         updateScoreDisplay()
@@ -179,6 +180,7 @@ class MainActivity : AppCompatActivity() {
                 for (image in imageArray) {
                     image.visibility = View.INVISIBLE
                 }
+                lastSessionScore = sessionScore
 
                 lifecycleScope.launch {
                     PokemonRepository.getInstance(this@MainActivity)
@@ -188,11 +190,7 @@ class MainActivity : AppCompatActivity() {
                     sessionScore = 0
                     runOnUiThread { updateScoreDisplay() }
                 }
-
-                if (!endDialogShown) {
-                    endDialogShown = true
-                    showEndGameDialog()
-                }
+                showDialogPending = true
             }
 
             override fun onTick(millisUntilFinished: Long) {
@@ -215,9 +213,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showEndGameDialog() {
         val (titulo, mensaje) = when {
-            sessionScore >= 30 -> "¡GANASTE!" to "Felicidades, lograste $sessionScore puntos.\nPuntaje global: $globalScore"
-            sessionScore <= 0 -> "PERDISTE" to "Tu puntaje es $sessionScore. Inténtalo de nuevo.\nPuntaje global: $globalScore"
-            else -> "Juego Terminado" to "Obtuviste $sessionScore puntos. Necesitas 30 para ganar.\nPuntaje global: $globalScore"
+            lastSessionScore >= 30 -> "¡GANASTE!" to "Felicidades, lograste $lastSessionScore puntos.\nPuntaje global: $globalScore"
+            lastSessionScore <= 0 -> "PERDISTE" to "Tu puntaje es $lastSessionScore. Inténtalo de nuevo.\nPuntaje global: $globalScore"
+            else -> "Juego Terminado" to "Obtuviste $lastSessionScore puntos. Necesitas 30 para ganar.\nPuntaje global: $globalScore"
         }
 
         val alert = AlertDialog.Builder(this@MainActivity)
@@ -388,8 +386,8 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread { updateScoreDisplay() }
                 }
             }
-            if (gameState == GameState.ENDED && !endDialogShown) {
-                endDialogShown = true
+            if (showDialogPending) {
+                showDialogPending = false
                 showEndGameDialog()
             }
         }

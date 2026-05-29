@@ -43,17 +43,19 @@ class TiendaPokemonActivity : AppCompatActivity() {
         }
         rvStore.adapter = adapter
 
-        viewModel.refreshGlobalScore()
-        tvStoreScore.text = "Puntaje global: ${viewModel.globalScore}"
+        lifecycleScope.launch {
+            viewModel.refreshGlobalScore()
+            tvStoreScore.text = "Puntaje global: ${viewModel.globalScore}"
 
-        viewModel.allPokemon.observe(this) { pokemonList ->
-            val purchasedIds = viewModel.purchasedPokemonIds.value?.toSet() ?: emptySet()
-            adapter.updateData(pokemonList, purchasedIds, viewModel.globalScore)
-        }
+            viewModel.allPokemon.observe(this@TiendaPokemonActivity) { pokemonList ->
+                val purchasedIds = viewModel.purchasedPokemonIds.value?.toSet() ?: emptySet()
+                adapter.updateData(pokemonList, purchasedIds, viewModel.globalScore)
+            }
 
-        viewModel.purchasedPokemonIds.observe(this) { purchasedIds ->
-            viewModel.allPokemon.value?.let { pokemonList ->
-                adapter.updateData(pokemonList, purchasedIds.toSet(), viewModel.globalScore)
+            viewModel.purchasedPokemonIds.observe(this@TiendaPokemonActivity) { purchasedIds ->
+                viewModel.allPokemon.value?.let { pokemonList ->
+                    adapter.updateData(pokemonList, purchasedIds.toSet(), viewModel.globalScore)
+                }
             }
         }
 
