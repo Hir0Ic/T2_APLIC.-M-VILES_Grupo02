@@ -31,17 +31,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private var activeUser: Usuario? = null
 
-    // LÓGICA DE ALONSO: Indices dinámicos de posición simultánea
-    private var indicePikachu = -1
-    private var indiceMeowth = -1
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         sessionManager = SessionManager(this)
         dbHelper = DatabaseHelper(this)
 
-        // Validar sesión de tus compañeros
+        // Validar sesión. Si no hay sesión activa, redirigir al Login
         if (!sessionManager.isLoggedIn()) {
             launchLoginActivity()
             return
@@ -49,7 +45,7 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        // Obtener datos del jugador en base de datos
+        // Obtener datos del jugador
         val userId = sessionManager.getUserId()
         activeUser = dbHelper.getUsuario(userId)
 
@@ -72,16 +68,25 @@ class MainActivity : AppCompatActivity() {
         scoreText.text = "Puntaje: $score"
 
         val imageView: ImageView = findViewById(R.id.imageView)
+        imageView.setImageResource(R.drawable.pikachu)
         val imageView2: ImageView = findViewById(R.id.imageView2)
+        imageView2.setImageResource(R.drawable.pikachu)
         val imageView3: ImageView = findViewById(R.id.imageView3)
+        imageView3.setImageResource(R.drawable.pikachu)
         val imageView4: ImageView = findViewById(R.id.imageView4)
+        imageView4.setImageResource(R.drawable.pikachu)
         val imageView5: ImageView = findViewById(R.id.imageView5)
+        imageView5.setImageResource(R.drawable.pikachu)
         val imageView6: ImageView = findViewById(R.id.imageView6)
+        imageView6.setImageResource(R.drawable.pikachu)
         val imageView7: ImageView = findViewById(R.id.imageView7)
+        imageView7.setImageResource(R.drawable.pikachu)
         val imageView8: ImageView = findViewById(R.id.imageView8)
+        imageView8.setImageResource(R.drawable.pikachu)
         val imageView9: ImageView = findViewById(R.id.imageView9)
+        imageView9.setImageResource(R.drawable.pikachu)
 
-        // ImageArray unificado
+        // ImageArray
         imageArray.add(imageView)
         imageArray.add(imageView2)
         imageArray.add(imageView3)
@@ -94,7 +99,7 @@ class MainActivity : AppCompatActivity() {
 
         hideImages()
 
-        // CountDown Timer original del grupo
+        // CountDown Timer
         object : CountDownTimer(15500, 1000) {
             override fun onFinish() {
                 timeText.text = "Tiempo: 0 seg"
@@ -107,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                 alert.setTitle("Juego terminado")
                 alert.setMessage("Reiniciar el juego?")
                 alert.setPositiveButton("Si") { dialog, which ->
+                    // Guardamos puntaje final en SQLite antes de reiniciar
                     activeUser?.let {
                         dbHelper.actualizarPuntaje(it.id, score)
                     }
@@ -115,6 +121,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
                 alert.setNegativeButton("No") { dialog, which ->
+                    // Guardamos puntaje final en SQLite
                     activeUser?.let {
                         dbHelper.actualizarPuntaje(it.id, score)
                     }
@@ -131,6 +138,7 @@ class MainActivity : AppCompatActivity() {
 
         // Configurar botón de cerrar sesión
         btnLogout.setOnClickListener {
+            // Guardar puntaje en base de datos antes de salir
             activeUser?.let {
                 dbHelper.actualizarPuntaje(it.id, score)
             }
@@ -139,7 +147,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // LÓGICA DE ALONSO: Aparición aleatoria y paralela de Pikachu y Meowth cada segundo
     fun hideImages() {
         runnable = object : Runnable {
             override fun run() {
@@ -147,41 +154,19 @@ class MainActivity : AppCompatActivity() {
                     image.visibility = View.INVISIBLE
                 }
                 val random = Random()
-
-                // 1. Mostrar Pikachu
-                indicePikachu = random.nextInt(9)
-                imageArray[indicePikachu].setImageResource(R.drawable.pikachu)
-                imageArray[indicePikachu].visibility = View.VISIBLE
-
-                // 2. Mostrar Meowth en una posición diferente
-                do {
-                    indiceMeowth = random.nextInt(9)
-                } while (indiceMeowth == indicePikachu)
-
-                imageArray[indiceMeowth].setImageResource(R.drawable.meowth)
-                imageArray[indiceMeowth].visibility = View.VISIBLE
-
+                val randomIndex = random.nextInt(9)
+                imageArray[randomIndex].visibility = View.VISIBLE
                 handler.postDelayed(runnable, 1000)
             }
         }
         handler.post(runnable)
     }
 
-    // LÓGICA DE ALONSO: Función unificada conectada con el onClick del XML
     fun increaseScore(view: View) {
-        // Encontrar qué ImageView disparó el clic mediante su ID
-        val clickedIndex = imageArray.indexOf(view as ImageView)
-
-        if (clickedIndex == indicePikachu) {
-            score += 1 // Pikachu da +1 punto
-        } else if (clickedIndex == indiceMeowth) {
-            score -= 2 // Meowth quita -2 puntos
-        }
-
-        // Actualizar UI
+        score = score + 1
         scoreText.text = "Puntaje: $score"
 
-        // Guardar puntaje en tiempo real en SQLite (Backend de tus compañeros)
+        // Guardar puntaje en tiempo real en SQLite
         activeUser?.let {
             dbHelper.actualizarPuntaje(it.id, score)
         }
