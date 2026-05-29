@@ -3,6 +3,7 @@ package com.example.juego
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.content.Intent
 import android.os.Handler
 import android.view.View
 import android.widget.EditText
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         imageArray.add(imageView9)
 
         hideImages()
+        actualizarPokemonPrincipal()
 
         //CountDown Timer
         object : CountDownTimer(15500,1000){
@@ -111,5 +113,45 @@ class MainActivity : AppCompatActivity() {
     fun increaseScore(view: View){
         score = score + 1
         scoreText.text = "Puntaje: $score"
+
+        getSharedPreferences("sesion", MODE_PRIVATE)
+            .edit()
+            .putInt("puntaje", score)
+            .apply()
+    }
+    override fun onResume() {
+        super.onResume()
+
+        val prefs = getSharedPreferences("sesion", MODE_PRIVATE)
+        score = prefs.getInt("puntaje", score)
+
+        if (::scoreText.isInitialized) {
+            scoreText.text = "Puntaje: $score"
+        }
+
+        if (imageArray.isNotEmpty()) {
+            actualizarPokemonPrincipal()
+        }
+    }
+    private fun actualizarPokemonPrincipal() {
+        val dbHelper = DBHelper(this)
+        val jugadorId = getSharedPreferences("sesion", MODE_PRIVATE).getInt("jugador_id", 1)
+
+        val imagenPokemon = dbHelper.obtenerPokemonMasCaro(jugadorId) ?: "pikachu"
+        val idImagen = resources.getIdentifier(imagenPokemon, "drawable", packageName)
+
+        for (image in imageArray) {
+            image.setImageResource(idImagen)
+        }
+    }
+    fun abrirTienda(view: View) {
+        getSharedPreferences("sesion", MODE_PRIVATE)
+            .edit()
+            .putInt("puntaje", score)
+            .putInt("jugador_id", 1)
+            .apply()
+
+        val intent = Intent(this, TiendaPokemonActivity::class.java)
+        startActivity(intent)
     }
 }
