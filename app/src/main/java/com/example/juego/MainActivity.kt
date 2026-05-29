@@ -135,15 +135,23 @@ class MainActivity : AppCompatActivity() {
     }
     private fun actualizarPokemonPrincipal() {
         val dbHelper = DBHelper(this)
-        val jugadorId = getSharedPreferences("sesion", MODE_PRIVATE).getInt("jugador_id", 1)
+
+        val jugadorId = getSharedPreferences("sesion", MODE_PRIVATE)
+            .getInt("jugador_id", 1)
 
         val imagenPokemon = dbHelper.obtenerPokemonMasCaro(jugadorId) ?: "pikachu"
-        val idImagen = resources.getIdentifier(imagenPokemon, "drawable", packageName)
+
+        var idImagen = resources.getIdentifier(imagenPokemon, "drawable", packageName)
+
+        if (idImagen == 0) {
+            idImagen = R.drawable.pikachu
+        }
 
         for (image in imageArray) {
             image.setImageResource(idImagen)
         }
     }
+
     fun abrirTienda(view: View) {
         getSharedPreferences("sesion", MODE_PRIVATE)
             .edit()

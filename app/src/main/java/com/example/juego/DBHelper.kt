@@ -27,6 +27,8 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "pokemon_clicker.db
         onCreate(db)
     }
 
+
+
     fun comprarPokemon(jugadorId: Int, nombre: String, imagen: String, costo: Int): Boolean {
         val db = writableDatabase
 
@@ -63,12 +65,12 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "pokemon_clicker.db
 
         val cursor = db.rawQuery(
             """
-            SELECT imagen 
-            FROM pokemon_comprados 
-            WHERE jugador_id = ? 
-            ORDER BY costo DESC 
-            LIMIT 1
-            """.trimIndent(),
+        SELECT imagen 
+        FROM pokemon_comprados 
+        WHERE jugador_id = ? 
+        ORDER BY costo DESC 
+        LIMIT 1
+        """.trimIndent(),
             arrayOf(jugadorId.toString())
         )
 
