@@ -160,6 +160,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGame() {
+        countDownTimer?.cancel()
         gameState = GameState.PLAYING
         showDialogPending = false
         endDialogShown = false
@@ -256,6 +257,25 @@ class MainActivity : AppCompatActivity() {
             finish()
         }
         alert.show()
+    }
+
+    private fun showPlayAgainDialog() {
+        AlertDialog.Builder(this@MainActivity)
+            .setTitle("Juego terminado")
+            .setMessage("¿Quieres jugar de nuevo?")
+            .setCancelable(false)
+            .setPositiveButton("Jugar") { _, _ ->
+                startGame()
+            }
+            .setNeutralButton("Ir a la tienda") { _, _ ->
+                val intent = Intent(this@MainActivity, TiendaPokemonActivity::class.java)
+                startActivity(intent)
+            }
+            .setNegativeButton("Salir") { _, _ ->
+                stopGame()
+                finish()
+            }
+            .show()
     }
 
     fun hideImages() {
@@ -403,6 +423,8 @@ class MainActivity : AppCompatActivity() {
             if (showDialogPending && !endDialogShown) {
                 showDialogPending = false
                 showEndGameDialog()
+            } else if (gameState == GameState.ENDED && endDialogShown) {
+                showPlayAgainDialog()
             }
         }
     }
