@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private var indicePikachu = -1
     private var indiceMeowth = -1
     private var gameState = GameState.IDLE
+    private var endDialogShown = false
 
     private lateinit var timeText: TextView
     private lateinit var scoreText: TextView
@@ -158,6 +159,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startGame() {
         gameState = GameState.PLAYING
+        endDialogShown = false
         sessionScore = 0
         GameStateManager.sessionScore = 0
         updateScoreDisplay()
@@ -184,7 +186,10 @@ class MainActivity : AppCompatActivity() {
                     globalScore += sessionScore
                 }
 
-                showEndGameDialog()
+                if (!endDialogShown) {
+                    endDialogShown = true
+                    showEndGameDialog()
+                }
             }
 
             override fun onTick(millisUntilFinished: Long) {
@@ -285,11 +290,11 @@ class MainActivity : AppCompatActivity() {
                         if (pokemon != null) {
                             val resId = getPokemonDrawable(pokemon.imageResName)
                             ivPurchased.setImageResource(resId)
-                            if (activePokemonName == "Pikachu" && activePokemonImage == "pikachu") {
+                            val prefs = getSharedPreferences("sesion", MODE_PRIVATE)
+                            if (!prefs.getBoolean("manual_pokemon_selection", false)) {
                                 activePokemonImage = pokemon.imageResName
                                 activePokemonName = pokemon.name
-                                getSharedPreferences("sesion", MODE_PRIVATE)
-                                    .edit()
+                                prefs.edit()
                                     .putString("active_pokemon_image", activePokemonImage)
                                     .putString("active_pokemon_name", activePokemonName)
                                     .apply()
@@ -299,6 +304,10 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             activePokemonImage = "pikachu"
                             activePokemonName = "Pikachu"
+                            getSharedPreferences("sesion", MODE_PRIVATE)
+                                .edit()
+                                .putBoolean("manual_pokemon_selection", false)
+                                .apply()
                             purchasedSection.visibility = View.GONE
                         }
                     }
@@ -326,6 +335,7 @@ class MainActivity : AppCompatActivity() {
                         .edit()
                         .putString("active_pokemon_image", activePokemonImage)
                         .putString("active_pokemon_name", activePokemonName)
+                        .putBoolean("manual_pokemon_selection", true)
                         .apply()
 
                     val tvPurchased = findViewById<TextView>(R.id.tvPurchasedPokemon)
@@ -374,6 +384,10 @@ class MainActivity : AppCompatActivity() {
                     globalScore = it.globalScore
                     runOnUiThread { updateScoreDisplay() }
                 }
+            }
+            if (gameState == GameState.ENDED && !endDialogShown) {
+                endDialogShown = true
+                showEndGameDialog()
             }
         }
     }
