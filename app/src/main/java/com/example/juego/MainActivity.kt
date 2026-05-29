@@ -66,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         // Mostrar datos de bienvenida
         tvWelcomeUser.text = "¡Hola, ${activeUser!!.nombreUsuario}!"
         scoreText.text = "Puntaje: $score"
+        timeText.text = "Tiempo: 01:15"
 
         val imageView: ImageView = findViewById(R.id.imageView)
         imageView.setImageResource(R.drawable.pikachu)
@@ -100,38 +101,56 @@ class MainActivity : AppCompatActivity() {
         hideImages()
 
         // CountDown Timer
-        object : CountDownTimer(15500, 1000) {
+        object : CountDownTimer(75000, 1000) {
             override fun onFinish() {
-                timeText.text = "Tiempo: 0 seg"
+                timeText.text = "Tiempo: 00:00"
                 handler.removeCallbacks(runnable)
                 for (image in imageArray) {
                     image.visibility = View.INVISIBLE
                 }
 
+                // 1. Guardar puntaje final en la base de datos (Importante)
+                activeUser?.let {
+                    dbHelper.actualizarPuntaje(it.id, score)
+                }
+
+                // 2. Determinar si ganó o perdió (Requisito Punto 5)
+                val titulo: String
+                val mensaje: String
+                if (score >= 30) {
+                    titulo = "¡GANASTE!"
+                    mensaje = "Felicidades, lograste $score puntos."
+                } else if (score <= 0) {
+                    titulo = "PERDISTE"
+                    mensaje = "Tu puntaje es $score. Inténtalo de nuevo."
+                } else {
+                    titulo = "Juego Terminado"
+                    mensaje = "Obtuviste $score puntos. Necesitas 30 para ganar."
+                }
+
+                // 3. Mostrar el diálogo
                 val alert = AlertDialog.Builder(this@MainActivity)
-                alert.setTitle("Juego terminado")
-                alert.setMessage("Reiniciar el juego?")
-                alert.setPositiveButton("Si") { dialog, which ->
-                    // Guardamos puntaje final en SQLite antes de reiniciar
-                    activeUser?.let {
-                        dbHelper.actualizarPuntaje(it.id, score)
-                    }
+                alert.setTitle(titulo)
+                alert.setMessage(mensaje)
+                alert.setCancelable(false)
+
+                alert.setPositiveButton("Reiniciar juego") { _, _ ->
                     val intent = intent
                     finish()
                     startActivity(intent)
                 }
-                alert.setNegativeButton("No") { dialog, which ->
-                    // Guardamos puntaje final en SQLite
-                    activeUser?.let {
-                        dbHelper.actualizarPuntaje(it.id, score)
-                    }
-                    Toast.makeText(this@MainActivity, "Juego Terminado =/", Toast.LENGTH_LONG).show()
+
+                alert.setNegativeButton("Salir") { _, _ ->
+                    finish() // O redirigir a una pantalla de estadísticas
                 }
                 alert.show()
             }
 
+
             override fun onTick(millisUntilFinished: Long) {
-                timeText.text = "Tiempo: " + millisUntilFinished / 1000 + " seg"
+                val minutes = (millisUntilFinished / 1000) / 60
+                val seconds = (millisUntilFinished / 1000) % 60
+                timeText.text = String.format("Tiempo: %02d:%02d", minutes, seconds)
             }
 
         }.start()
