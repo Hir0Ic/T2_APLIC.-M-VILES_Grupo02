@@ -48,15 +48,15 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         val POKEMON_SEED_DATA = listOf(
-            PokemonEntity(1, "Bulbasaur", "ic_pokemon_bulbasaur", 5),
-            PokemonEntity(2, "Charmander", "ic_pokemon_charmander", 8),
-            PokemonEntity(3, "Squirtle", "ic_pokemon_squirtle", 8),
-            PokemonEntity(4, "Pikachu", "pikachu", 10),
-            PokemonEntity(5, "Meowth", "meowth", 6),
-            PokemonEntity(6, "Eevee", "ic_pokemon_eevee", 12),
-            PokemonEntity(7, "Snorlax", "ic_pokemon_snorlax", 20),
-            PokemonEntity(8, "Gengar", "ic_pokemon_gengar", 25),
-            PokemonEntity(9, "Mewtwo", "ic_pokemon_mewtwo", 50)
+            PokemonEntity(1, "Magikarp", "magikarp", 5),
+            PokemonEntity(2, "Diglett", "diglett", 8),
+            PokemonEntity(3, "Nidoran", "nidoran", 10),
+            PokemonEntity(4, "Charmander", "charmander", 12),
+            PokemonEntity(5, "Jigglypuff", "jigglypuff", 14),
+            PokemonEntity(6, "Squirtle", "squirtle", 15),
+            PokemonEntity(7, "Vulpix", "vulpix", 20),
+            PokemonEntity(8, "Vaporeon", "vaporeon", 25),
+            PokemonEntity(9, "Blastoise", "blastoise", 30)
         )
     }
 }
