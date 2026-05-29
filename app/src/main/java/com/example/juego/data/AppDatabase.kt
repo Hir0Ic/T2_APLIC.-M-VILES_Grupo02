@@ -5,9 +5,6 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [PokemonEntity::class, PurchaseEntity::class, UserEntity::class],
@@ -39,10 +36,11 @@ abstract class AppDatabase : RoomDatabase() {
         private class SeedCallback : Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                INSTANCE?.let { database ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        database.pokemonDao().insertAllPokemon(POKEMON_SEED_DATA)
-                    }
+                POKEMON_SEED_DATA.forEach { pokemon ->
+                    db.execSQL(
+                        "INSERT OR IGNORE INTO pokemon_catalog (id, name, imageResName, cost) VALUES (?, ?, ?, ?)",
+                        arrayOf(pokemon.id.toString(), pokemon.name, pokemon.imageResName, pokemon.cost.toString())
+                    )
                 }
             }
         }
